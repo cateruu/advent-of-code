@@ -18,31 +18,29 @@ func main() {
 
 	fs := bufio.NewScanner(readFile)
 
-	bag := map[string]int{"red": 12, "green": 13, "blue": 14}
 	sum := 0
-	idx := 1
 	for fs.Scan() {
 		game := fs.Text()
 
 		rounds := strings.Split(game, ":")[1]
+		maxCubes := map[string]int{"red": 1, "green": 1, "blue": 1}
 
-		impossible := 0
 		for _, round := range strings.Split(rounds, ";") {
 			for _, cubes := range strings.Split(round, ",") {
 				cubeInfo := strings.Split(cubes, " ")
 				cubeAmount, _ := strconv.Atoi(cubeInfo[1])
-				if bag[cubeInfo[2]] < cubeAmount {
-					impossible++
-					break
+				if maxCubes[cubeInfo[2]] < cubeAmount {
+					maxCubes[cubeInfo[2]] = cubeAmount
 				}
 			}
 		}
 
-		if impossible == 0 {
-			sum += idx
+		setPower := 1
+		for _, v := range maxCubes {
+			setPower *= v
 		}
 
-		idx++
+		sum += setPower
 	}
 
 	fmt.Println(sum)
