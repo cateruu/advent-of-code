@@ -6,9 +6,12 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func main() {
+	start := time.Now()
+
 	readFile, err := os.Open("input.txt")
 	defer readFile.Close()
 
@@ -43,5 +46,6 @@ func main() {
 		sum += setPower
 	}
 
-	fmt.Println(sum)
+	elapsed := time.Since(start)
+	fmt.Println(sum, elapsed)
 }
