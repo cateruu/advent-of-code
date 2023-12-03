@@ -41,7 +41,7 @@ func main() {
 				number += string(v)
 			}
 
-			if number != "" && (i == len(line)-1 || string(v) == "." || checkIsSymbol(string(v))) {
+			if number != "" && (i == len(line)-1 || string(v) == "." || CheckIsSymbol(string(v))) {
 				if string(v) == "." {
 					positions = append(positions, Position{Line: lineIndex, StartIndex: (i - 1) - (len(number) - 1), EndIndex: i - 1, Value: number})
 				} else {
@@ -58,11 +58,11 @@ func main() {
 		var left, right, top, bottom bool
 
 		if v.StartIndex != 0 {
-			left = checkIsSymbol(string(lines[v.Line][v.StartIndex-1]))
+			left = CheckIsSymbol(string(lines[v.Line][v.StartIndex-1]))
 		}
 
 		if v.EndIndex != len(lines[v.Line])-1 {
-			right = checkIsSymbol(string(lines[v.Line][v.EndIndex]))
+			right = CheckIsSymbol(string(lines[v.Line][v.EndIndex]))
 		}
 
 		if v.Line != 0 {
@@ -86,9 +86,10 @@ func main() {
 
 	elapsed := time.Since(start)
 	fmt.Println(sum, elapsed)
+	Part2()
 }
 
-func checkIsSymbol(str string) bool {
+func CheckIsSymbol(str string) bool {
 	symbols := `+-*/@&$#=%`
 
 	return strings.Contains(symbols, str)
@@ -106,7 +107,7 @@ func verticalCheck(line string, numInfo Position) bool {
 	}
 
 	for _, s := range lineToCheck {
-		if checkIsSymbol(string(s)) {
+		if CheckIsSymbol(string(s)) {
 			return true
 		}
 	}
