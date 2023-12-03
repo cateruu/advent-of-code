@@ -4,8 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"slices"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -29,55 +29,53 @@ func main() {
 	fs := bufio.NewScanner(readfile)
 
 	positions := []Position{}
+	lines := []string{}
 	lineIndex := 0
 	for fs.Scan() {
 		line := fs.Text()
+		lines = append(lines, line)
 
 		number := ""
 		for i, v := range line {
-			if number != "" && (string(v) == "." || checkIsSymbol(string(v))) {
-				positions = append(positions, Position{Line: lineIndex, StartIndex: (i - 1) - (len(number) - 1), EndIndex: i - 1, Value: number})
-				number = ""
-			}
-
 			if string(v) >= "0" && string(v) <= "9" {
 				number += string(v)
 			}
 
-			if checkIsSymbol(string(v)) {
-				positions = append(positions, Position{Line: lineIndex, StartIndex: i, Value: string(v)})
+			if number != "" && (i == len(line)-1 || string(v) == "." || checkIsSymbol(string(v))) {
+				if string(v) == "." {
+					positions = append(positions, Position{Line: lineIndex, StartIndex: (i - 1) - (len(number) - 1), EndIndex: i - 1, Value: number})
+				} else {
+					positions = append(positions, Position{Line: lineIndex, StartIndex: i - (len(number) - 1), EndIndex: i, Value: number})
+				}
+				number = ""
 			}
-
 		}
 		lineIndex++
 	}
 
-	symbolPositions := getSymbolPositions(positions)
-
 	partNumbers := []int{}
 	for _, v := range positions {
-		if checkIsSymbol(v.Value) {
-			continue
+		var left, right, top, bottom bool
+
+		if v.StartIndex != 0 {
+			left = checkIsSymbol(string(lines[v.Line][v.StartIndex-1]))
 		}
 
-		previousLine := v.Line - 1
-		if v.Line == 0 {
-			previousLine = 0
+		if v.EndIndex != len(lines[v.Line])-1 {
+			right = checkIsSymbol(string(lines[v.Line][v.EndIndex]))
 		}
-		nextLine := v.Line + 1
 
-		startLookIndex := v.StartIndex - 1
-		if v.StartIndex == 0 {
-			startLookIndex = 0
+		if v.Line != 0 {
+			top = verticalCheck(lines[v.Line-1], v)
 		}
-		endLookIndex := v.EndIndex + 1
-		for i := previousLine; i <= nextLine; i++ {
-			for j := startLookIndex; j <= endLookIndex; j++ {
-				if isNearSymbol(symbolPositions, i, j) {
-					number, _ := strconv.Atoi(v.Value)
-					partNumbers = append(partNumbers, number)
-				}
-			}
+
+		if v.Line != len(lines)-1 {
+			bottom = verticalCheck(lines[v.Line+1], v)
+		}
+
+		if left || right || top || bottom {
+			number, _ := strconv.Atoi(v.Value)
+			partNumbers = append(partNumbers, number)
 		}
 	}
 
@@ -91,25 +89,24 @@ func main() {
 }
 
 func checkIsSymbol(str string) bool {
-	symbols := []string{"!", "@", "#", "$", "%", "^", "&", "*", "-", "_", "=", "+", "/"}
+	symbols := `+-*/@&$#=%`
 
-	return slices.Contains(symbols, str)
+	return strings.Contains(symbols, str)
 }
 
-func getSymbolPositions(positions []Position) []Position {
-	symbols := []Position{}
-	for _, v := range positions {
-		if checkIsSymbol(v.Value) {
-			symbols = append(symbols, v)
-		}
+func verticalCheck(line string, numInfo Position) bool {
+	lineToCheck := ""
+
+	if numInfo.EndIndex == len(line)-1 {
+		lineToCheck = line[numInfo.StartIndex-1 : numInfo.EndIndex+1]
+	} else if numInfo.StartIndex == 0 {
+		lineToCheck = line[numInfo.StartIndex : numInfo.EndIndex+2]
+	} else {
+		lineToCheck = line[numInfo.StartIndex-1 : numInfo.EndIndex+2]
 	}
 
-	return symbols
-}
-
-func isNearSymbol(symbols []Position, line int, place int) bool {
-	for _, symbol := range symbols {
-		if symbol.Line == line && symbol.StartIndex == place {
+	for _, s := range lineToCheck {
+		if checkIsSymbol(string(s)) {
 			return true
 		}
 	}
