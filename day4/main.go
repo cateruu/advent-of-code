@@ -40,7 +40,7 @@ func main() {
 
 	for i, game := range allCards {
 		for j := 0; j < game.NumberOfCards; j++ {
-			playCopiedCards(&game, &allCards, game.Won, i)
+			playCopiedCards(&allCards, game.Won, i)
 		}
 	}
 
@@ -63,12 +63,12 @@ func checkWinNumbers(nums []string, winNums []string) int {
 	return won
 }
 
-func playCopiedCards(currentCard *Game, allCards *[]Game, cardsLeft int, currentCardIdx int) {
+func playCopiedCards(allCards *[]Game, cardsLeft int, currentCardIdx int) {
 	if cardsLeft <= 0 || currentCardIdx+1 >= len(*allCards) {
 		return
 	}
 
 	(*allCards)[currentCardIdx+1].NumberOfCards++
 
-	playCopiedCards(currentCard, allCards, cardsLeft-1, currentCardIdx+1)
+	playCopiedCards(allCards, cardsLeft-1, currentCardIdx+1)
 }
