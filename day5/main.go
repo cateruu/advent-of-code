@@ -41,9 +41,20 @@ func main() {
 
 		if line[0] == "seeds" {
 			s := strings.Split(line[1], " ")
-			for _, v := range s {
+			for i, v := range s {
+				if i+1 == len(s) {
+					break
+				}
+
+				if i%2 == 1 {
+					continue
+				}
+
 				num, _ := strconv.Atoi(v)
-				seeds = append(seeds, num)
+				repeat, _ := strconv.Atoi(s[i+1])
+				for j := 0; j < repeat; j++ {
+					seeds = append(seeds, num+j)
+				}
 			}
 		} else if line[0] != "" && line[0][len(line[0])-1] != ':' {
 			nums := strings.Split(line[0], " ")
