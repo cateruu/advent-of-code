@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Race struct {
@@ -14,6 +15,7 @@ type Race struct {
 }
 
 func main() {
+	start := time.Now()
 	readFile, err := os.Open("input.txt")
 	defer readFile.Close()
 
@@ -23,43 +25,31 @@ func main() {
 
 	fs := bufio.NewScanner(readFile)
 
-	races := make([]Race, 4)
+	race := Race{}
 	idx := 0
 	for fs.Scan() {
 		line := strings.Split(fs.Text(), ":")
 		nums := strings.TrimSpace(line[1])
 
-		innerIdx := 0
-		for _, n := range strings.Split(nums, " ") {
-			if n == "" {
-				continue
-			}
-
-			number, _ := strconv.Atoi(n)
-			if idx == 0 {
-				races[innerIdx] = Race{Time: number}
-			} else {
-				races[innerIdx] = Race{Time: races[innerIdx].Time, Distance: number}
-			}
-
-			innerIdx++
+		nums = strings.ReplaceAll(nums, " ", "")
+		nInt, _ := strconv.Atoi(nums)
+		if idx == 0 {
+			race = Race{Time: nInt}
+		} else {
+			race = Race{Time: race.Time, Distance: nInt}
 		}
 		idx++
 	}
 
-	sum := 1
-	for _, race := range races {
-		waysToWin := 0
-		distance := 0
-		for i := 1; i < race.Time; i++ {
-			distance = i * (race.Time - i)
-			if distance > race.Distance {
-				waysToWin++
-			}
+	waysToWin := 0
+	distance := 0
+	for i := 1; i < race.Time; i++ {
+		distance = i * (race.Time - i)
+		if distance > race.Distance {
+			waysToWin++
 		}
-
-		sum *= waysToWin
 	}
 
-	fmt.Println(sum)
+	elapsed := time.Since(start)
+	fmt.Println(waysToWin, elapsed)
 }
