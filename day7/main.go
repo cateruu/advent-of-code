@@ -37,7 +37,7 @@ func main() {
 		handTypes[handType] = append(handTypes[handType], Hand{Hand: game[0], Bid: bid})
 	}
 
-	sorter := abcsort.New("123456789TJQKA")
+	sorter := abcsort.New("J123456789TQKA")
 	for _, hand := range handTypes {
 		sorter.Slice(hand, func(i int) string {
 			return hand[i].Hand
@@ -63,6 +63,27 @@ func getHandType(hand string) string {
 	allCards := make(map[rune]int)
 	for _, card := range hand {
 		allCards[card]++
+	}
+
+	var biggestPair rune
+	biggestValue := 0
+	jokerValue := 0
+	for k, v := range allCards {
+		if k == 'J' {
+			jokerValue = v
+			continue
+		}
+
+		if v > biggestValue {
+			biggestPair = k
+			biggestValue = v
+		}
+	}
+
+	_, ok := allCards['J']
+	if ok {
+		allCards[biggestPair] += jokerValue
+		delete(allCards, 'J')
 	}
 
 	nums := []string{}
