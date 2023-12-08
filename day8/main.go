@@ -97,6 +97,7 @@ func getNodeSteps(startingNode string, nodes map[string][]string, instruction st
 	return steps
 }
 
+// Greatest Common Factor - Euclidean Algorithm
 func gcf(a, b int) int {
 	for b != 0 {
 		t := b
@@ -107,6 +108,7 @@ func gcf(a, b int) int {
 	return a
 }
 
+// Least Common Multiple - with gcf ^
 func lcm(steps ...int) int {
 	result := steps[0] * steps[1] / gcf(steps[0], steps[1])
 
