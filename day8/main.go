@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 func main() {
+	start := time.Now()
 	readFile, err := os.Open("input.txt")
 	defer readFile.Close()
 
@@ -36,11 +38,44 @@ func main() {
 
 		idx++
 	}
+	currentNodes := findStartingNodes(&nodes)
+	steps := []int{}
+	for i := 0; i < len(currentNodes); i++ {
+		steps = append(steps, getNodeSteps(currentNodes[i], nodes, instruction))
 
+	}
+
+	elapsed := time.Since(start)
+	fmt.Println(lcm(steps...), elapsed)
+}
+
+func findStartingNodes(nodes *map[string][]string) []string {
+	startingNodes := []string{}
+	for k := range *nodes {
+		if k[2] == 'A' {
+			startingNodes = append(startingNodes, k)
+		}
+	}
+
+	return startingNodes
+}
+
+func checkIfEnd(nodes *[]string) bool {
+	endNodes := 0
+	for _, node := range *nodes {
+		if node[2] == 'Z' {
+			endNodes++
+		}
+	}
+
+	return endNodes == len(*nodes)
+}
+
+func getNodeSteps(startingNode string, nodes map[string][]string, instruction string) int {
 	i := 0
-	currentNode := "AAA"
+	currentNode := startingNode
 	steps := 0
-	for currentNode != "ZZZ" {
+	for !strings.HasSuffix(currentNode, "Z") {
 		direction := nodes[currentNode]
 
 		if instruction[i] == 'L' {
@@ -59,5 +94,25 @@ func main() {
 		}
 	}
 
-	fmt.Println(steps)
+	return steps
+}
+
+func gcf(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
+	}
+
+	return a
+}
+
+func lcm(steps ...int) int {
+	result := steps[0] * steps[1] / gcf(steps[0], steps[1])
+
+	for i := 2; i < len(steps); i++ {
+		result = lcm(result, steps[i])
+	}
+
+	return result
 }
