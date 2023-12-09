@@ -28,6 +28,7 @@ func main() {
 		for i, v := range line {
 			history[i], _ = strconv.Atoi(v)
 		}
+
 		allValues = append(allValues, getExtrapolatedValue(history))
 	}
 
@@ -57,12 +58,12 @@ func getExtrapolatedValue(history []int) int {
 		idx++
 	}
 
-	lastNumbers := []int{}
+	first := []int{}
 	for _, his := range values {
-		lastNumbers = append(lastNumbers, his[len(his)-1])
+		first = append(first, his[0])
 	}
 
-	return getNextValue(lastNumbers)
+	return getNextValue(first)
 }
 
 func checkAllZeros(history []int) bool {
@@ -87,7 +88,7 @@ func getNextValue(values []int) int {
 			continue
 		}
 
-		nextValue += v
+		nextValue = v - nextValue
 	}
 
 	return nextValue
