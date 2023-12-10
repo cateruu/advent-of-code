@@ -4,19 +4,24 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"sort"
 	"time"
+
+	"golang.org/x/exp/slices"
 )
 
 type Position struct {
-	Line      int
-	Index     int
-	Direction string
-	Pipe      rune
+	Line        int
+	Index       int
+	Direction   string
+	Pipe        rune
+	IsEdge      bool
+	IsEndOfLine bool
 }
 
 func main() {
 	start := time.Now()
-	readFile, err := os.Open("input.txt")
+	readFile, err := os.Open("test.txt")
 	defer readFile.Close()
 
 	if err != nil {
@@ -33,98 +38,118 @@ func main() {
 	}
 
 	startingPos := findStartingPos(pipeMap)
-	fullLoopNumber := findFurthestPipe(startingPos, &pipeMap)
+	allPipes := getAllPipesPositions(startingPos, &pipeMap)
+	sort.Slice(allPipes, func(i, j int) bool {
+		if allPipes[i].Line != allPipes[j].Line {
+			return allPipes[i].Line < allPipes[j].Line
+		}
+
+		return allPipes[i].Index < allPipes[j].Index
+	})
+	allPipes = setUpEdges(allPipes)
+	trapped := trappedByLoop(allPipes, pipeMap)
 
 	elapsed := time.Since(start)
-	fmt.Println(fullLoopNumber/2, elapsed)
+	fmt.Println(trapped, elapsed)
 }
 
-func findFurthestPipe(startingPos Position, pipeMap *[]string) int {
+func trappedByLoop(loop []Position, pipeMap []string) int {
+	trappedAmount := 0
+	isTrapped := false
+	for lineIdx, line := range pipeMap {
+		for itemIdx := range line {
+			fmt.Println(isTrapped)
+			pipeIdx := slices.IndexFunc(loop, func(i Position) bool {
+				return i.Line == lineIdx && i.Index == itemIdx
+			})
+
+			if pipeIdx != -1 {
+				if loop[pipeIdx].IsEdge {
+					isTrapped = !isTrapped
+				}
+
+				if loop[pipeIdx].IsEndOfLine {
+					isTrapped = false
+				}
+
+				continue
+			}
+
+			if isTrapped {
+				fmt.Println("here")
+				trappedAmount++
+			}
+		}
+		fmt.Println()
+	}
+
+	return trappedAmount
+}
+
+func setUpEdges(loop []Position) []Position {
+	positions := make([]Position, len(loop))
+	currLine := loop[0].Line
+	wasOnLine := false
+	for i, pos := range loop {
+		if currLine != pos.Line {
+			currLine = pos.Line
+			wasOnLine = false
+		}
+
+		// bottom right pipe
+		if i == len(loop)-1 {
+			pos.IsEdge = true
+		}
+
+		// chcek right
+		if i != len(loop)-1 && pos.Line == loop[i+1].Line && pos.Index != loop[i+1].Index-1 {
+			pos.IsEdge = true
+		}
+
+		// check left
+		if i != 0 && pos.Line == loop[i-1].Line && pos.Index-1 != loop[i-1].Index {
+			pos.IsEdge = true
+		}
+
+		// first of line
+		if !wasOnLine {
+			pos.IsEdge = true
+			wasOnLine = true
+		}
+
+		//last of line
+		if i != len(loop)-1 && pos.Line != loop[i+1].Line {
+			pos.IsEdge = true
+			pos.IsEndOfLine = true
+		}
+
+		positions[i] = pos
+	}
+
+	return positions
+}
+
+func getAllPipesPositions(startingPos Position, pipeMap *[]string) []Position {
 	nextPipe := findNextPipeFromStart(startingPos, *pipeMap)
+	pipes := []Position{startingPos}
 
-	fullLoopNumber := getFullLoopNumber(nextPipe, *pipeMap, startingPos)
-
-	return fullLoopNumber
+	pipes = append(pipes, getPipesPositionsFromStart(nextPipe, *pipeMap, startingPos)...)
+	return pipes
 }
 
-func getFullLoopNumber(pipePos Position, pipeMap []string, startPos Position) int {
+func getPipesPositionsFromStart(pipePos Position, pipeMap []string, startPos Position) []Position {
+	pipes := []Position{}
 	pipe := pipePos
-	steps := 1
 	for {
+		pipes = append(pipes, pipe)
 		pipe = findNextPipe(pipe, pipeMap)
 		if pipe.Line == startPos.Line && pipe.Index == startPos.Index {
 			break
 		}
-
-		steps++
 	}
 
-	// pipe = reversePipeDirection(pipePos)
-	// i := 0
-	// for {
-	// 	// fmt.Println("curr", string(pipe.Pipe), pipe.Direction)
-	// 	pipe = findNextPipe(pipe, pipeMap)
-	// 	// fmt.Println("next", string(pipe.Pipe), pipe.Direction)
-
-	// 	if pipe.Direction == "" {
-	// 		break
-	// 	}
-
-	// 	if pipe.Line == startPos.Line && pipe.Index == startPos.Index {
-	// 		break
-	// 	}
-
-	// 	i++
-	// 	steps++
-	// }
-	// rank[1] = steps
-
-	return steps + 1
+	return pipes
 }
-
-// func reversePipeDirection(pipe Position) Position {
-// 	direction := pipe.Direction
-// 	switch pipe.Pipe {
-// 	case '|':
-// 		if direction == "n" {
-// 			direction = "s"
-// 		} else {
-// 			direction = "n"
-// 		}
-// 	case '-':
-// 		if direction == "w" {
-// 			direction = "e"
-// 		} else {
-// 			direction = "w"
-// 		}
-// 	case 'L':
-// 		if direction == "s" {
-// 			direction = "w"
-// 		} else {
-// 			direction = "s"
-// 		}
-// 	case 'J':
-// 		if direction == "s" {
-// 			direction = "w"
-// 		} else {
-// 			direction = "s"
-// 		}
-// 	case '7':
-// 		if direction == "n" {
-// 			direction = "e"
-// 		} else {
-// 			direction = "n"
-// 		}
-// 	case 'F':
-// 		if direction == "n" {
-// 			direction = "w"
-// 		} else {
-// 			direction = "n"
-// 		}
-// 	}
-
-// 	return Position{Line: pipe.Line, Index: pipe.Index, Direction: direction, Pipe: pipe.Pipe}
-// }
 
 func findNextPipe(currentPos Position, pipeMap []string) Position {
 	var line, index int
@@ -263,12 +288,14 @@ func getPipeDirection(pipe rune, prevDirection string) string {
 func findNextPipeFromStart(startingPos Position, pipeMap []string) Position {
 	for i := 0; i < 4; i++ {
 		if i == 0 {
-			line := startingPos.Line - 1
-			index := startingPos.Index
+			// line := startingPos.Line - 1
+			// index := startingPos.Index
+			line := startingPos.Line
+			index := startingPos.Index + 1
 			pipe := rune(pipeMap[line][index])
 
 			if pipe != '.' {
-				return Position{Line: line, Index: index, Direction: "n", Pipe: pipe}
+				return Position{Line: line, Index: index, Direction: "e", Pipe: pipe}
 			}
 		} else if i == 1 {
 			line := startingPos.Line
